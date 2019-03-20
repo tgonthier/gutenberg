@@ -5,11 +5,22 @@ import { withSelect } from '@wordpress/data';
 import { Fragment } from '@wordpress/element';
 import { getActiveFormat, getActiveObject } from '@wordpress/rich-text';
 
-const FormatEdit = ( { formatTypes, onChange, value } ) => {
+const FormatEdit = ( { formatTypes, onChange, value, disallowFormats } ) => {
+	if ( disallowFormats === true ) {
+		return null;
+	}
+
 	return (
 		<Fragment>
 			{ formatTypes.map( ( { name, edit: Edit } ) => {
 				if ( ! Edit ) {
+					return null;
+				}
+
+				if (
+					disallowFormats &&
+					disallowFormats.indexOf( name ) !== -1
+				) {
 					return null;
 				}
 

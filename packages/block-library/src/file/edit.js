@@ -197,7 +197,7 @@ class FileEdit extends Component {
 							value={ fileName }
 							placeholder={ __( 'Write file name…' ) }
 							keepPlaceholderOnFocus
-							formattingControls={ [] } // disable controls
+							disallowFormats // disable controls
 							onChange={ ( text ) => setAttributes( { fileName: text } ) }
 						/>
 						{ showDownloadButton &&
@@ -207,7 +207,7 @@ class FileEdit extends Component {
 									tagName="div" // must be block-level or else cursor disappears
 									className={ 'wp-block-file__button' }
 									value={ downloadButtonText }
-									formattingControls={ [] } // disable controls
+									disallowFormats // disable controls
 									placeholder={ __( 'Add text…' ) }
 									keepPlaceholderOnFocus
 									onChange={ ( text ) => setAttributes( { downloadButtonText: text } ) }
