@@ -37,9 +37,9 @@ Render a rich [`contenteditable` input](https://developer.mozilla.org/en-US/docs
 
 *Optional.* Called when the block can be removed. `forward` is true when the selection is expected to move to the next block, false to the previous block.
 
-### `formattingControls: Array`
+### `disallowFormats: Array | Boolean`
 
-*Optional.* By default, all formatting controls are present. This setting can be used to fine-tune formatting controls. Possible items: `[ 'bold', 'italic', 'strikethrough', 'link' ]`.
+*Optional.* By default, all kinds of formatting can be used in RichText. This setting can be used to disallow all, or certain, formats. Set to true to disallow all formats. Use an array with format names to disallow those formats.
 
 ### `isSelected: Boolean`
 

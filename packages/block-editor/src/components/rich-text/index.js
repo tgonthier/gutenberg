@@ -105,6 +105,19 @@ export class RichText extends Component {
 			this.onSplit = this.props.unstableOnSplit;
 		}
 
+		if ( this.props.disallowFormats ) {
+			this.disallowFormats = this.props.disallowFormats;
+		} else if ( this.props.formattingControls ) {
+			deprecated( 'wp.editor.RichText formattingControls prop', {
+				plugin: 'Gutenberg',
+				alternative: 'wp.editor.RichText disallowFormats prop',
+			} );
+
+			if ( this.props.formattingControls.length === 0 ) {
+				this.disallowFormats = true;
+			}
+		}
+
 		this.onFocus = this.onFocus.bind( this );
 		this.onBlur = this.onBlur.bind( this );
 		this.onChange = this.onChange.bind( this );
