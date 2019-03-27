@@ -5,6 +5,7 @@ import classnames from 'classnames';
 import {
 	find,
 	isNil,
+	isEqual,
 	omit,
 	pickBy,
 } from 'lodash';
@@ -134,7 +135,6 @@ export class RichText extends Component {
 		this.valueToEditableHTML = this.valueToEditableHTML.bind( this );
 		this.handleHorizontalNavigation = this.handleHorizontalNavigation.bind( this );
 		this.onPointerDown = this.onPointerDown.bind( this );
-		this.onPointerUp = this.onPointerUp.bind( this );
 
 		this.formatToValue = memize( this.formatToValue.bind( this ), { size: 1 } );
 
@@ -191,24 +191,6 @@ export class RichText extends Component {
 		return { formats, replacements, text, start, end, selectedFormat };
 	}
 
-	/**
-	 * Get the current record with lingering selection state. In some cases,
-	 * lingering selection state after blur is needed to be able to format the
-	 * selected text.
-	 *
-	 * @return {Object} The current record (value and lingering selection).
-	 */
-	getLingeringRecord() {
-		const record = this.getRecord();
-		const { lastState = {} } = this;
-
-		return {
-			...record,
-			start: record.start ? record.start : lastState.start,
-			end: record.end ? record.end : lastState.end,
-		};
-	}
-
 	createRecord() {
 		const selection = getSelection();
 		const range = selection.rangeCount > 0 ? selection.getRangeAt( 0 ) : null;
@@ -223,14 +205,14 @@ export class RichText extends Component {
 		} );
 	}
 
-	applyRecord( value ) {
+	applyRecord( record, { domOnly } = {} ) {
 		apply( {
-			value,
+			value: record,
 			current: this.editableRef,
 			multilineTag: this.multilineTag,
 			multilineWrapperTags: this.multilineWrapperTags,
 			prepareEditableTree: Object.values( pickPropsByPrefix( this.props, 'format_prepare_functions' ) ),
-			__unstableDomOnly: this.preventSelectionUpdate,
+			__unstableDomOnly: domOnly,
 		} );
 	}
 
@@ -384,13 +366,10 @@ export class RichText extends Component {
 		}
 
 		document.addEventListener( 'selectionchange', this.onSelectionChange );
-		this.setState( this.lastState );
 	}
 
 	onBlur() {
 		document.removeEventListener( 'selectionchange', this.onSelectionChange );
-		this.lastState = this.state;
-		this.setState( { start: undefined, end: undefined, selectedFormat: undefined } );
 	}
 
 	/**
@@ -513,6 +492,7 @@ export class RichText extends Component {
 			}
 
 			this.setState( { start, end, selectedFormat } );
+			this.applyRecord( { ...value, selectedFormat }, { domOnly: true } );
 
 			delete this.formatPlaceholder;
 
@@ -560,6 +540,8 @@ export class RichText extends Component {
 	 *                                    created.
 	 */
 	onChange( record, { withoutHistory } = {} ) {
+		this.applyRecord( record );
+
 		const { start, end, formatPlaceholder, selectedFormat } = record;
 
 		this.formatPlaceholder = formatPlaceholder;
@@ -846,6 +828,7 @@ export class RichText extends Component {
 		setTimeout( () => this.recalculateBoundaryStyle() );
 
 		if ( newSelectedFormat !== selectedFormat ) {
+			this.applyRecord( { ...value, selectedFormat: newSelectedFormat } );
 			this.setState( { selectedFormat: newSelectedFormat } );
 			return;
 		}
@@ -853,6 +836,12 @@ export class RichText extends Component {
 		const newPos = value.start + ( isReverse ? -1 : 1 );
 
 		this.setState( { start: newPos, end: newPos } );
+		this.applyRecord( {
+			...value,
+			start: newPos,
+			end: newPos,
+			selectedFormat: isReverse ? formatsBefore.length : formatsAfter.length,
+		} );
 	}
 
 	/**
@@ -911,8 +900,6 @@ export class RichText extends Component {
 	onPointerDown( event ) {
 		const { target } = event;
 
-		this.preventSelectionUpdate = true;
-
 		// If the child element has no text content, it must be an object.
 		if ( target === this.editableRef || target.textContent ) {
 			return;
@@ -931,37 +918,54 @@ export class RichText extends Component {
 	}
 
 	componentDidUpdate( prevProps ) {
-		const prefix = 'format_prepare_props_';
-		let record = this.getRecord();
+		const { tagName, value, isSelected } = this.props;
 
-		// To do: find a better way to refocus the field after annotation prop
-		// changes.
+		if (
+			tagName === prevProps.tagName &&
+			value !== prevProps.value &&
+			value !== this.savedContent
+		) {
+			// Handle deprecated `children` and `node` sources.
+			// The old way of passing a value with the `node` matcher required
+			// the value to be mapped first, creating a new array each time, so
+			// a shallow check wouldn't work. We need to check deep equality.
+			// This is only executed for a deprecated API and will eventually be
+			// removed.
+			if ( Array.isArray( value ) && isEqual( value, this.savedContent ) ) {
+				return;
+			}
+
+			const record = this.formatToValue( value );
+
+			if ( isSelected ) {
+				const prevRecord = this.formatToValue( prevProps.value );
+				const length = getTextContent( prevRecord ).length;
+				record.start = length;
+				record.end = length;
+			}
+
+			this.applyRecord( record );
+			this.savedContent = value;
+		}
+
+		const prefix = 'format_prepare_props_';
+
+		// If any format props update, reapply value.
 		if ( ! isShallowEqual(
 			pickPropsByPrefix( this.props, prefix ),
 			pickPropsByPrefix( prevProps, prefix )
 		) ) {
-			record = this.getLingeringRecord();
+			const record = this.formatToValue( value );
+
+			// Maintain the previous selection if the instance is currently
+			// selected.
+			if ( isSelected ) {
+				record.start = this.state.start;
+				record.end = this.state.end;
+			}
+
+			this.applyRecord( record );
 		}
-
-		// To do: find a better way to move the caret to the end after merge.
-		// If the value's been changed from the outside and the instance is
-		// selected, set the caret at the end on focus (which sets
-		// this.lastState).
-		if ( this.props.isSelected && this.props.value !== this.savedContent ) {
-			const prevRecord = this.formatToValue( prevProps.value );
-			const length = getTextContent( prevRecord ).length;
-
-			this.lastState = {
-				start: length,
-				end: length,
-			};
-		}
-
-		this.applyRecord( record );
-	}
-
-	onPointerUp() {
-		delete this.preventSelectionUpdate;
 	}
 
 	/**
@@ -1077,7 +1081,6 @@ export class RichText extends Component {
 		const isPlaceholderVisible = placeholder && ( ! isSelected || keepPlaceholderOnFocus ) && this.isEmpty();
 		const classes = classnames( wrapperClassName, 'editor-rich-text block-editor-rich-text' );
 		const record = this.getRecord();
-		const lingeringRecord = this.getLingeringRecord();
 
 		return (
 			<div className={ classes } onFocus={ this.setFocusedElement }>
@@ -1085,7 +1088,7 @@ export class RichText extends Component {
 					<ListEdit
 						onTagNameChange={ onTagNameChange }
 						tagName={ Tagname }
-						value={ lingeringRecord }
+						value={ record }
 						onChange={ this.onChange }
 					/>
 				) }
@@ -1128,8 +1131,6 @@ export class RichText extends Component {
 								onBlur={ this.onBlur }
 								onMouseDown={ this.onPointerDown }
 								onTouchStart={ this.onPointerDown }
-								onMouseUp={ this.onPointerUp }
-								onTouchEnd={ this.onPointerUp }
 								setRef={ this.setRef }
 							/>
 							{ isPlaceholderVisible &&
@@ -1140,10 +1141,7 @@ export class RichText extends Component {
 									{ MultilineTag ? <MultilineTag>{ placeholder }</MultilineTag> : placeholder }
 								</Tagname>
 							}
-							{ isSelected && <FormatEdit
-								value={ lingeringRecord }
-								onChange={ this.onChange }
-							/> }
+							{ isSelected && <FormatEdit value={ record } onChange={ this.onChange } /> }
 						</Fragment>
 					) }
 				</Autocomplete>
