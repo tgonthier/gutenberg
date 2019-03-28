@@ -9,6 +9,78 @@ import { capitalize } from 'lodash';
 import { modifiers, SHIFT, ALT, CTRL } from '@wordpress/keycodes';
 
 /**
+ * Emulates a Ctrl+A SelectAll key combination by dispatching custom keyboard
+ * events and using the results of those events to determine whether to call
+ * `document.execCommand( 'selectall' );`. This is necessary because Puppeteer
+ * does not emulate Ctrl+A SelectAll in macOS. Events are dispatched to ensure
+ * that any `Event#preventDefault` which would have normally occurred in the
+ * application as a result of Ctrl+A is respected.
+ *
+ * @link https://github.com/GoogleChrome/puppeteer/issues/1313
+ * @link https://w3c.github.io/uievents/tools/key-event-viewer.html
+ *
+ * @return {Promise} Promise resolving once the SelectAll emulation completes.
+ */
+async function emulateSelectAll() {
+	await page.evaluate( () => {
+		document.body.dispatchEvent(
+			new KeyboardEvent( 'keydown', {
+				key: 'Control',
+				code: 'ControlLeft',
+				location: window.KeyboardEvent.DOM_KEY_LOCATION_LEFT,
+				getModifierState: ( keyArg ) => keyArg === 'Control',
+				ctrl: true,
+				charCode: 0,
+				keyCode: 17,
+				which: 17,
+			} )
+		);
+
+		document.body.dispatchEvent(
+			new KeyboardEvent( 'keydown', {
+				key: 'a',
+				code: 'KeyA',
+				location: window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
+				getModifierState: ( keyArg ) => keyArg === 'Control',
+				ctrl: true,
+				charCode: 0,
+				keyCode: 65,
+				which: 65,
+			} )
+		);
+
+		const wasPrevented = ! document.body.dispatchEvent(
+			new KeyboardEvent( 'keyup', {
+				key: 'a',
+				code: 'KeyA',
+				location: window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
+				getModifierState: ( keyArg ) => keyArg === 'Control',
+				ctrl: true,
+				charCode: 0,
+				keyCode: 65,
+				which: 65,
+			} )
+		);
+
+		if ( ! wasPrevented ) {
+			document.execCommand( 'selectall', false, null );
+		}
+
+		document.body.dispatchEvent(
+			new KeyboardEvent( 'keyup', {
+				key: 'Control',
+				code: 'ControlLeft',
+				location: window.KeyboardEvent.DOM_KEY_LOCATION_LEFT,
+				getModifierState: () => false,
+				charCode: 0,
+				keyCode: 17,
+				which: 17,
+			} ),
+		);
+	} );
+}
+
+/**
  * Performs a key press with modifier (Shift, Control, Meta, Alt), where each modifier
  * is normalized to platform-specific modifier.
  *
@@ -16,6 +88,10 @@ import { modifiers, SHIFT, ALT, CTRL } from '@wordpress/keycodes';
  * @param {string} key Key to press while modifier held.
  */
 export async function pressKeyWithModifier( modifier, key ) {
+	if ( modifier.toLowerCase() === 'primary' && key.toLowerCase() === 'a' ) {
+		return await emulateSelectAll();
+	}
+
 	const isAppleOS = () => process.platform === 'darwin';
 	const overWrittenModifiers = {
 		...modifiers,
