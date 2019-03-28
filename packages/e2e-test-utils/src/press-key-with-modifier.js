@@ -8,6 +8,8 @@ import { capitalize } from 'lodash';
  */
 import { modifiers, SHIFT, ALT, CTRL } from '@wordpress/keycodes';
 
+const IS_MAC_OS = process.platform === 'darwin';
+
 /**
  * Emulates a Ctrl+A SelectAll key combination by dispatching custom keyboard
  * events and using the results of those events to determine whether to call
@@ -22,62 +24,60 @@ import { modifiers, SHIFT, ALT, CTRL } from '@wordpress/keycodes';
  * @return {Promise} Promise resolving once the SelectAll emulation completes.
  */
 async function emulateSelectAll() {
-	await page.evaluate( () => {
-		document.body.dispatchEvent(
+	await page.evaluate( ( isMac ) => {
+		document.activeElement.dispatchEvent(
 			new KeyboardEvent( 'keydown', {
-				key: 'Control',
-				code: 'ControlLeft',
+				bubbles: true,
+				cancelable: true,
+				key: isMac ? 'Meta' : 'Control',
+				code: isMac ? 'MetaLeft' : 'ControlLeft',
 				location: window.KeyboardEvent.DOM_KEY_LOCATION_LEFT,
-				getModifierState: ( keyArg ) => keyArg === 'Control',
-				ctrl: true,
+				getModifierState: ( keyArg ) => keyArg === ( isMac ? 'Meta' : 'Control' ),
+				ctrl: ! isMac,
+				meta: isMac,
 				charCode: 0,
-				keyCode: 17,
-				which: 17,
+				keyCode: isMac ? 93 : 17,
+				which: isMac ? 93 : 17,
 			} )
 		);
 
-		const wasPrevented = ! document.body.dispatchEvent(
-			new KeyboardEvent( 'keydown', {
-				key: 'a',
-				code: 'KeyA',
-				location: window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
-				getModifierState: ( keyArg ) => keyArg === 'Control',
-				ctrl: true,
-				charCode: 0,
-				keyCode: 65,
-				which: 65,
-			} )
+		const preventableEvent = new KeyboardEvent( 'keydown', {
+			bubbles: true,
+			cancelable: true,
+			key: 'a',
+			code: 'KeyA',
+			location: window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
+			getModifierState: ( keyArg ) => keyArg === ( isMac ? 'Meta' : 'Control' ),
+			ctrl: ! isMac,
+			meta: isMac,
+			charCode: 0,
+			keyCode: 65,
+			which: 65,
+		} );
+
+		const wasPrevented = (
+			! document.activeElement.dispatchEvent( preventableEvent ) ||
+			preventableEvent.defaultPrevented
 		);
 
 		if ( ! wasPrevented ) {
 			document.execCommand( 'selectall', false, null );
 		}
 
-		document.body.dispatchEvent(
+		document.activeElement.dispatchEvent(
 			new KeyboardEvent( 'keyup', {
-				key: 'a',
-				code: 'KeyA',
-				location: window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
-				getModifierState: ( keyArg ) => keyArg === 'Control',
-				ctrl: true,
-				charCode: 0,
-				keyCode: 65,
-				which: 65,
-			} )
-		);
-
-		document.body.dispatchEvent(
-			new KeyboardEvent( 'keyup', {
-				key: 'Control',
-				code: 'ControlLeft',
+				bubbles: true,
+				cancelable: true,
+				key: isMac ? 'Meta' : 'Control',
+				code: isMac ? 'MetaLeft' : 'ControlLeft',
 				location: window.KeyboardEvent.DOM_KEY_LOCATION_LEFT,
 				getModifierState: () => false,
 				charCode: 0,
-				keyCode: 17,
-				which: 17,
+				keyCode: isMac ? 93 : 17,
+				which: isMac ? 93 : 17,
 			} ),
 		);
-	} );
+	}, IS_MAC_OS );
 }
 
 /**
@@ -92,12 +92,11 @@ export async function pressKeyWithModifier( modifier, key ) {
 		return await emulateSelectAll();
 	}
 
-	const isAppleOS = () => process.platform === 'darwin';
 	const overWrittenModifiers = {
 		...modifiers,
 		shiftAlt: ( _isApple ) => _isApple() ? [ SHIFT, ALT ] : [ SHIFT, CTRL ],
 	};
-	const mappedModifiers = overWrittenModifiers[ modifier ]( isAppleOS );
+	const mappedModifiers = overWrittenModifiers[ modifier ]( IS_MAC_OS );
 	const ctrlSwap = ( mod ) => mod === CTRL ? 'control' : mod;
 
 	await Promise.all(
