@@ -36,21 +36,8 @@ async function emulateSelectAll() {
 			} )
 		);
 
-		document.body.dispatchEvent(
-			new KeyboardEvent( 'keydown', {
-				key: 'a',
-				code: 'KeyA',
-				location: window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
-				getModifierState: ( keyArg ) => keyArg === 'Control',
-				ctrl: true,
-				charCode: 0,
-				keyCode: 65,
-				which: 65,
-			} )
-		);
-
 		const wasPrevented = ! document.body.dispatchEvent(
-			new KeyboardEvent( 'keyup', {
+			new KeyboardEvent( 'keydown', {
 				key: 'a',
 				code: 'KeyA',
 				location: window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
@@ -65,6 +52,19 @@ async function emulateSelectAll() {
 		if ( ! wasPrevented ) {
 			document.execCommand( 'selectall', false, null );
 		}
+
+		document.body.dispatchEvent(
+			new KeyboardEvent( 'keyup', {
+				key: 'a',
+				code: 'KeyA',
+				location: window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
+				getModifierState: ( keyArg ) => keyArg === 'Control',
+				ctrl: true,
+				charCode: 0,
+				keyCode: 65,
+				which: 65,
+			} )
+		);
 
 		document.body.dispatchEvent(
 			new KeyboardEvent( 'keyup', {
