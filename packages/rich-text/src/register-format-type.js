@@ -10,16 +10,6 @@ import { select, dispatch, withSelect, withDispatch } from '@wordpress/data';
 import { addFilter } from '@wordpress/hooks';
 import { compose } from '@wordpress/compose';
 
-function getPropsByPrefix( props, prefix ) {
-	return Object.keys( props ).reduce( ( accumulator, key ) => {
-		if ( key.startsWith( prefix ) ) {
-			accumulator[ key.slice( prefix.length ) ] = props[ key ];
-		}
-
-		return accumulator;
-	}, {} );
-}
-
 /**
  * Registers a new format provided a unique name and an object defining its
  * behavior.
@@ -140,10 +130,17 @@ export function registerFormatType( name, settings ) {
 
 			const Component = ( props ) => {
 				const newProps = { ...props };
-				const propsByPrefix = {
-					...getPropsByPrefix( props, selectPrefix ),
-					...getPropsByPrefix( props, dispatchPrefix ),
-				};
+				const propsByPrefix = Object.keys( props ).reduce( ( accumulator, key ) => {
+					if ( key.startsWith( selectPrefix ) ) {
+						accumulator[ key.slice( selectPrefix.length ) ] = props[ key ];
+					}
+
+					if ( key.startsWith( dispatchPrefix ) ) {
+						accumulator[ key.slice( dispatchPrefix.length ) ] = props[ key ];
+					}
+
+					return accumulator;
+				}, {} );
 				const args = {
 					richTextIdentifier: props.identifier,
 					blockClientId: props.clientId,
