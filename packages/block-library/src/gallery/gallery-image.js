@@ -132,6 +132,7 @@ class GalleryImage extends Component {
 						<IconButton
 							icon="controls-back"
 							onClick={ onMoveBackward }
+							className="blocks-gallery-item__move-backward"
 							label={ __( 'Move Image Backward' ) }
 						/>
 						<IconButton
@@ -143,6 +144,7 @@ class GalleryImage extends Component {
 						<IconButton
 							icon="controls-forward"
 							onClick={ onMoveForward }
+							className="blocks-gallery-item__move-forward"
 							label={ __( 'Move Image Forward' ) }
 						/>
 					</div>
