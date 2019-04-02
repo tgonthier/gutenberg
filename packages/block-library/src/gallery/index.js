@@ -17,6 +17,11 @@ import { createBlobURL } from '@wordpress/blob';
  */
 import { default as edit, defaultColumnsNumber, pickRelevantMediaFiles } from './edit';
 import icon from './icon';
+import metadata from './block.json';
+
+const { name } = metadata;
+
+export { metadata, name };
 
 const blockAttributes = {
 	images: {
@@ -70,8 +75,6 @@ const blockAttributes = {
 	},
 };
 
-export const name = 'core/gallery';
-
 const parseShortcodeIds = ( ids ) => {
 	if ( ! ids ) {
 		return [];
@@ -86,7 +89,6 @@ export const settings = {
 	title: __( 'Gallery' ),
 	description: __( 'Display multiple images in a rich gallery.' ),
 	icon,
-	category: 'common',
 	keywords: [ __( 'images' ), __( 'photos' ) ],
 	attributes: blockAttributes,
 	supports: {

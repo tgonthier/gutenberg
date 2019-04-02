@@ -5,12 +5,17 @@ import { __ } from '@wordpress/i18n';
 import { InnerBlocks } from '@wordpress/block-editor';
 import { G, Path, Rect, SVG } from '@wordpress/components';
 
-export const name = 'core/template';
+/**
+ * Internal dependencies
+ */
+import metadata from './block.json';
+
+const { name } = metadata;
+
+export { metadata, name };
 
 export const settings = {
 	title: __( 'Reusable Template' ),
-
-	category: 'reusable',
 
 	description: __( 'Template block used as a container.' ),
 

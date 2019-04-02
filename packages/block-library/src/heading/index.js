@@ -22,6 +22,11 @@ import {
  * Internal dependencies
  */
 import edit from './edit';
+import metadata from './block.json';
+
+const { name } = metadata;
+
+export { metadata, name };
 
 /**
  * Given a node name string for a heading node, returns its numeric level.
@@ -58,16 +63,12 @@ const schema = {
 	},
 };
 
-export const name = 'core/heading';
-
 export const settings = {
 	title: __( 'Heading' ),
 
 	description: __( 'Introduce new sections and organize content to help visitors (and search engines) understand the structure of your content.' ),
 
 	icon: <SVG xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><Path d="M5 4v3h5.5v12h3V7H19V4z" /><Path fill="none" d="M0 0h24v24H0V0z" /></SVG>,
-
-	category: 'common',
 
 	keywords: [ __( 'title' ), __( 'subtitle' ) ],
 

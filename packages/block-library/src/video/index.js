@@ -11,8 +11,11 @@ import { __ } from '@wordpress/i18n';
  */
 import edit from './edit';
 import icon from './icon';
+import metadata from './block.json';
 
-export const name = 'core/video';
+const { name } = metadata;
+
+export { metadata, name };
 
 export const settings = {
 	title: __( 'Video' ),
@@ -22,8 +25,6 @@ export const settings = {
 	icon,
 
 	keywords: [ __( 'movie' ) ],
-
-	category: 'common',
 
 	attributes: {
 		autoplay: {

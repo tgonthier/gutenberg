@@ -11,7 +11,14 @@ import {
 } from '@wordpress/block-editor';
 import { SVG, Path } from '@wordpress/components';
 
-export const name = 'core/verse';
+/**
+ * Internal dependencies
+ */
+import metadata from './block.json';
+
+const { name } = metadata;
+
+export { metadata, name };
 
 export const settings = {
 	title: __( 'Verse' ),
@@ -19,8 +26,6 @@ export const settings = {
 	description: __( 'Insert poetry. Use special spacing formats. Or quote song lyrics.' ),
 
 	icon: <SVG viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><Path d="M21 11.01L3 11V13H21V11.01ZM3 16H17V18H3V16ZM15 6H3V8.01L15 8V6Z" /></SVG>,
-
-	category: 'formatting',
 
 	keywords: [ __( 'poetry' ) ],
 

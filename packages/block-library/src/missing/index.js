@@ -8,6 +8,15 @@ import { getBlockType, createBlock } from '@wordpress/blocks';
 import { withDispatch } from '@wordpress/data';
 import { Warning } from '@wordpress/block-editor';
 
+/**
+ * Internal dependencies
+ */
+import metadata from './block.json';
+
+const { name } = metadata;
+
+export { metadata, name };
+
 function MissingBlockWarning( { attributes, convertToHTML } ) {
 	const { originalName, originalUndelimitedContent } = attributes;
 	const hasContent = !! originalUndelimitedContent;
@@ -53,11 +62,8 @@ const edit = withDispatch( ( dispatch, { clientId, attributes } ) => {
 	};
 } )( MissingBlockWarning );
 
-export const name = 'core/missing';
-
 export const settings = {
 	name,
-	category: 'common',
 	title: __( 'Unrecognized Block' ),
 	description: __( 'Your site doesn’t include support for this block.' ),
 

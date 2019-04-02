@@ -21,8 +21,11 @@ import { __ } from '@wordpress/i18n';
  */
 import edit from './edit';
 import icon from './icon';
+import metadata from './block.json';
 
-export const name = 'core/image';
+const { name } = metadata;
+
+export { metadata, name };
 
 const blockAttributes = {
 	url: {
@@ -148,8 +151,6 @@ export const settings = {
 	description: __( 'Insert an image to make a visual statement.' ),
 
 	icon,
-
-	category: 'common',
 
 	keywords: [
 		'img', // "img" is not translated as it is intended to reflect the HTML <img> tag.

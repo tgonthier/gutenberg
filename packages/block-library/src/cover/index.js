@@ -26,6 +26,11 @@ import {
 	backgroundImageStyles,
 	dimRatioToClass,
 } from './edit';
+import metadata from './block.json';
+
+const { name } = metadata;
+
+export { metadata, name };
 
 const blockAttributes = {
 	url: {
@@ -57,16 +62,12 @@ const blockAttributes = {
 	},
 };
 
-export const name = 'core/cover';
-
 export const settings = {
 	title: __( 'Cover' ),
 
 	description: __( 'Add an image or video with a text overlay — great for headers.' ),
 
 	icon,
-
-	category: 'common',
 
 	attributes: blockAttributes,
 

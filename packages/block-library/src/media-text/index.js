@@ -19,10 +19,13 @@ import { __ } from '@wordpress/i18n';
  */
 import edit from './edit';
 import icon from './icon';
+import metadata from './block.json';
 
 const DEFAULT_MEDIA_WIDTH = 50;
 
-export const name = 'core/media-text';
+const { name } = metadata;
+
+export { metadata, name };
 
 const blockAttributes = {
 	align: {
@@ -74,8 +77,6 @@ export const settings = {
 	description: __( 'Set media and words side-by-side for a richer layout.' ),
 
 	icon,
-
-	category: 'layout',
 
 	keywords: [ __( 'image' ), __( 'video' ) ],
 
