@@ -129,24 +129,30 @@ class GalleryImage extends Component {
 			<figure className={ className } tabIndex="-1" onKeyDown={ this.onKeyDown } ref={ this.bindContainer }>
 				{ isSelected &&
 					<div className="block-library-gallery-item__inline-menu">
-						<IconButton
-							icon="controls-back"
-							onClick={ onMoveBackward }
-							className="blocks-gallery-item__move-backward"
-							label={ __( 'Move Image Backward' ) }
-						/>
+						{ process.env.GUTENBERG_PHASE === 2 ?
+							<IconButton
+								icon="controls-back"
+								onClick={ onMoveBackward }
+								className="blocks-gallery-item__move-backward"
+								label={ __( 'Move Image Backward' ) }
+							/> :
+							null
+						}
 						<IconButton
 							icon="no-alt"
 							onClick={ onRemove }
 							className="blocks-gallery-item__remove"
 							label={ __( 'Remove Image' ) }
 						/>
-						<IconButton
-							icon="controls-forward"
-							onClick={ onMoveForward }
-							className="blocks-gallery-item__move-forward"
-							label={ __( 'Move Image Forward' ) }
-						/>
+						{ process.env.GUTENBERG_PHASE === 2 ?
+							<IconButton
+								icon="controls-forward"
+								onClick={ onMoveForward }
+								className="blocks-gallery-item__move-forward"
+								label={ __( 'Move Image Forward' ) }
+							/> :
+							null
+						}
 					</div>
 				}
 				{ href ? <a href={ href }>{ img }</a> : img }
